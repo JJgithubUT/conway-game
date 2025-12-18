@@ -1,227 +1,288 @@
-// patrón prototype comienza aqui
-// patrón prototype comienza aqui
-// patrón prototype comienza aqui
-function Cell(isAlive) {
-    this.isAlive = isAlive || false;
+/**
+ * PATRÓN PROTOTYPE
+ */
+function Celda(estaViva) {
+    this.estaViva = estaViva || false;
 }
 
-Cell.prototype.clone = function() {
-    return new Cell(this.isAlive);
+Celda.prototype.clonar = function() {
+    return new Celda(this.estaViva);
 };
 
-Cell.prototype.toggle = function() {
-    this.isAlive = !this.isAlive;
+Celda.prototype.alternar = function() {
+    this.estaViva = !this.estaViva;
 };
-// patrón prototype termina aqui
-// patrón prototype termina aqui
-// patrón prototype termina aqui
 
-// --- CONFIGURACIÓN DEL SISTEMA ---
+// --- VARIABLES GLOBALES ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const cellSize = 20;
-let rows, cols;
-let grid = [];
-let isRunning = false;
-let simInterval = null;
-let speed = 100;
+const tamanoCelda = 20;
+let filas, columnas;
+let rejilla = [];
+let enEjecucion = false;
+let intervaloSim = null;
+let velocidad = 100;
 
-// Variables de Selección
-let isSelecting = false;
-let selectionStart = { x: 0, y: 0 };
-let selectionEnd = { x: 0, y: 0 };
-let capturedPattern = null;
+// Gestión de Selección y Pegado
+let seleccionando = false;
+let inicioSeleccion = { x: 0, y: 0 };
+let finSeleccion = { x: 0, y: 0 };
+let patronCapturado = null;
+let esperandoPegado = false;
 
-function init() {
+function inicializar() {
     canvas.width = canvas.parentElement.clientWidth;
     canvas.height = canvas.parentElement.clientHeight;
-    cols = Math.floor(canvas.width / cellSize);
-    rows = Math.floor(canvas.height / cellSize);
+    columnas = Math.floor(canvas.width / tamanoCelda);
+    filas = Math.floor(canvas.height / tamanoCelda);
     
-    // Inicializar rejilla con el prototipo
-    const protoCell = new Cell(false);
-    grid = Array.from({ length: rows }, () => 
-        Array.from({ length: cols }, () => protoCell.clone())
+    const celdaProto = new Celda(false);
+    rejilla = Array.from({ length: filas }, () => 
+        Array.from({ length: columnas }, () => celdaProto.clonar())
     );
-    draw();
+    
+    actualizarListaPartidas();
+    dibujar();
 }
 
-// --- DIBUJO ---
-function draw() {
+// --- RENDERIZADO ---
+function dibujar() {
     ctx.fillStyle = "#050505";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            if (grid[r][c].isAlive) {
-                ctx.fillStyle = "#00ffff"; // Cyan TNO
-                ctx.fillRect(c * cellSize, r * cellSize, cellSize - 1, cellSize - 1);
+    for (let f = 0; f < filas; f++) {
+        for (let c = 0; c < columnas; c++) {
+            if (rejilla[f][c].estaViva) {
+                ctx.fillStyle = "#00ffff"; 
+                ctx.fillRect(c * tamanoCelda, f * tamanoCelda, tamanoCelda - 1, tamanoCelda - 1);
             } else {
                 ctx.strokeStyle = "#001525";
-                ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                ctx.strokeRect(c * tamanoCelda, f * tamanoCelda, tamanoCelda, tamanoCelda);
             }
         }
     }
 
-    if (isSelecting) {
+    if (seleccionando) {
         ctx.strokeStyle = "rgba(0, 255, 255, 0.5)";
         ctx.setLineDash([5, 5]);
         ctx.strokeRect(
-            selectionStart.x * cellSize, 
-            selectionStart.y * cellSize, 
-            (selectionEnd.x - selectionStart.x) * cellSize, 
-            (selectionEnd.y - selectionStart.y) * cellSize
+            inicioSeleccion.x * tamanoCelda, 
+            inicioSeleccion.y * tamanoCelda, 
+            (finSeleccion.x - inicioSeleccion.x) * tamanoCelda, 
+            (finSeleccion.y - inicioSeleccion.y) * tamanoCelda
         );
         ctx.setLineDash([]);
     }
-    updateStatus();
+    actualizarEstadoUI();
 }
 
-// --- INTERACCIÓN ---
+// --- INTERACCIÓN CON EL MOUSE ---
 canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / cellSize);
-    const y = Math.floor((e.clientY - rect.top) / cellSize);
+    const x = Math.floor((e.clientX - rect.left) / tamanoCelda);
+    const y = Math.floor((e.clientY - rect.top) / tamanoCelda);
 
+    // Caso 1: Estamos esperando para pegar un patrón
+    if (esperandoPegado) {
+        ejecutarPegado(x, y);
+        return;
+    }
+
+    // Caso 2: Captura de área con SHIFT
     if (e.shiftKey) {
-        isSelecting = true;
-        selectionStart = { x, y };
-        selectionEnd = { x, y };
-    } else {
-        grid[y][x].toggle();
-        draw();
+        seleccionando = true;
+        inicioSeleccion = { x, y };
+        finSeleccion = { x, y };
+    } 
+    // Caso 3: Alternar celda individual
+    else {
+        if (rejilla[y] && rejilla[y][x]) {
+            rejilla[y][x].alternar();
+            dibujar();
+        }
     }
 });
 
 canvas.addEventListener('mousemove', (e) => {
-    if (isSelecting) {
+    if (seleccionando) {
         const rect = canvas.getBoundingClientRect();
-        selectionEnd = { 
-            x: Math.floor((e.clientX - rect.left) / cellSize), 
-            y: Math.floor((e.clientY - rect.top) / cellSize) 
+        finSeleccion = { 
+            x: Math.floor((e.clientX - rect.left) / tamanoCelda), 
+            y: Math.floor((e.clientY - rect.top) / tamanoCelda) 
         };
-        draw();
+        dibujar();
     }
 });
 
-canvas.addEventListener('mouseup', () => {
-    if (isSelecting) {
-        captureArea();
-        isSelecting = false;
-        draw();
+window.addEventListener('mouseup', () => {
+    if (seleccionando) {
+        capturarArea();
+        seleccionando = false;
+        dibujar();
     }
 });
 
-// --- CAPTURA Y PATRONES (HISTORIA 4) ---
-function captureArea() {
-    const xStart = Math.min(selectionStart.x, selectionEnd.x);
-    const xEnd = Math.max(selectionStart.x, selectionEnd.x);
-    const yStart = Math.min(selectionStart.y, selectionEnd.y);
-    const yEnd = Math.max(selectionStart.y, selectionEnd.y);
+// --- LÓGICA DE SUB-SECTORES ---
+function capturarArea() {
+    const xInicio = Math.min(inicioSeleccion.x, finSeleccion.x);
+    const xFin = Math.max(inicioSeleccion.x, finSeleccion.x);
+    const yInicio = Math.min(inicioSeleccion.y, finSeleccion.y);
+    const yFin = Math.max(inicioSeleccion.y, finSeleccion.y);
 
-    capturedPattern = [];
-    for (let r = yStart; r <= yEnd; r++) {
-        let rowData = [];
-        for (let c = xStart; c <= xEnd; c++) {
-            rowData.push(grid[r][c].isAlive);
+    patronCapturado = [];
+    for (let f = yInicio; f <= yFin; f++) {
+        let datosFila = [];
+        for (let c = xInicio; c <= xFin; c++) {
+            datosFila.push(rejilla[f][c].estaViva);
         }
-        capturedPattern.push(rowData);
+        patronCapturado.push(datosFila);
     }
-    console.log("Sector captured and stored in memory.");
+    console.log("Sector capturado.");
 }
 
-function pastePattern() {
-    if (!capturedPattern) return alert("NO HAY PATRÓN ALMACENADO");
-    // Pega en el centro por defecto
-    for (let r = 0; r < capturedPattern.length; r++) {
-        for (let c = 0; c < capturedPattern[r].length; c++) {
-            if (grid[r] && grid[r][c]) {
-                grid[r][c].isAlive = capturedPattern[r][c];
+function activarModoPegado() {
+    if (!patronCapturado) {
+        alert("PRIMERO CAPTURA UN ÁREA (SHIFT + ARRASTRAR)");
+        return;
+    }
+    esperandoPegado = true;
+    document.getElementById('sim-status').innerText = "ASIGNANDO POSICIÓN...";
+    canvas.style.cursor = "copy";
+}
+
+function ejecutarPegado(xOrigen, yOrigen) {
+    for (let f = 0; f < patronCapturado.length; f++) {
+        for (let c = 0; c < patronCapturado[f].length; c++) {
+            let fDestino = yOrigen + f;
+            let cDestino = xOrigen + c;
+            
+            // Verificamos que no se salga de los bordes del canvas
+            if (fDestino < filas && cDestino < columnas) {
+                rejilla[fDestino][cDestino].estaViva = patronCapturado[f][c];
             }
         }
     }
-    draw();
+    esperandoPegado = false;
+    canvas.style.cursor = "crosshair";
+    document.getElementById('sim-status').innerText = enEjecucion ? "EJECUTANDO" : "PAUSADO";
+    dibujar();
 }
 
-// --- LÓGICA DE SIMULACIÓN (CONWAY) ---
-function computeNextGen() {
-    const nextGrid = grid.map(row => row.map(cell => cell.clone()));
+// --- LÓGICA CONWAY ---
+function calcularSiguienteGen() {
+    const nuevaRejilla = rejilla.map(fila => fila.map(celda => celda.clonar()));
 
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            let neighbors = countNeighbors(r, c);
-            if (grid[r][c].isAlive) {
-                if (neighbors < 2 || neighbors > 3) nextGrid[r][c].isAlive = false;
+    for (let f = 0; f < filas; f++) {
+        for (let c = 0; c < columnas; c++) {
+            let vecinos = contarVecinos(f, c);
+            if (rejilla[f][c].estaViva) {
+                if (vecinos < 2 || vecinos > 3) nuevaRejilla[f][c].estaViva = false;
             } else {
-                if (neighbors === 3) nextGrid[r][c].isAlive = true;
+                if (vecinos === 3) nuevaRejilla[f][c].estaViva = true;
             }
         }
     }
-    grid = nextGrid;
-    draw();
+    rejilla = nuevaRejilla;
+    dibujar();
 }
 
-function countNeighbors(r, c) {
-    let sum = 0;
-    for (let i = -1; i < 2; i++) {
-        for (let j = -1; j < 2; j++) {
+function contarVecinos(f, c) {
+    let cuenta = 0;
+    for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
             if (i === 0 && j === 0) continue;
-            let row = (r + i + rows) % rows;
-            let col = (c + j + cols) % cols;
-            if (grid[row][col].isAlive) sum++;
+            let fila = (f + i + filas) % filas;
+            let col = (c + j + columnas) % columnas;
+            if (rejilla[fila][col].estaViva) cuenta++;
         }
     }
-    return sum;
+    return cuenta;
 }
 
-// --- CONTROLES DE UI ---
-function toggleSim() {
-    isRunning = !isRunning;
-    const btn = document.getElementById('btn-play');
-    const status = document.getElementById('sim-status');
+// --- GESTIÓN DE LOCALSTORAGE ---
+function guardarPartidaLocal() {
+    const nombre = document.getElementById('nombre-partida').value.trim();
+    if (!nombre) return alert("INGRESE IDENTIFICADOR DE MISIÓN");
+
+    const datos = rejilla.map(fila => fila.map(c => c.estaViva));
+    const partidas = JSON.parse(localStorage.getItem('conway_tno_saves') || '{}');
     
-    if (isRunning) {
-        btn.innerText = "PARAR SIMULACIÓN";
-        status.innerText = "ACTIVO";
-        simInterval = setInterval(computeNextGen, speed);
+    partidas[nombre] = datos;
+    localStorage.setItem('conway_tno_saves', JSON.stringify(partidas));
+    
+    document.getElementById('nombre-partida').value = "";
+    actualizarListaPartidas();
+}
+
+function cargarPartidaLocal() {
+    const nombre = document.getElementById('lista-partidas').value;
+    if (!nombre) return;
+
+    const partidas = JSON.parse(localStorage.getItem('conway_tno_saves') || '{}');
+    const datos = partidas[nombre];
+
+    if (datos) {
+        rejilla = datos.map(fila => fila.map(viva => new Celda(viva)));
+        dibujar();
+    }
+}
+
+function eliminarPartidaLocal() {
+    const nombre = document.getElementById('lista-partidas').value;
+    if (!nombre) return;
+
+    const partidas = JSON.parse(localStorage.getItem('conway_tno_saves') || '{}');
+    delete partidas[nombre];
+    localStorage.setItem('conway_tno_saves', JSON.stringify(partidas));
+    actualizarListaPartidas();
+}
+
+function actualizarListaPartidas() {
+    const lista = document.getElementById('lista-partidas');
+    const partidas = JSON.parse(localStorage.getItem('conway_tno_saves') || '{}');
+    lista.innerHTML = "";
+    
+    Object.keys(partidas).forEach(nombre => {
+        const opt = document.createElement('option');
+        opt.value = nombre;
+        opt.textContent = nombre;
+        lista.appendChild(opt);
+    });
+}
+
+// --- CONTROLES UI ---
+function alternarSimulacion() {
+    enEjecucion = !enEjecucion;
+    const btn = document.getElementById('btn-play');
+    const estado = document.getElementById('sim-status');
+    
+    if (enEjecucion) {
+        btn.innerHTML = '<i class="fas fa-pause"></i>';
+        estado.innerText = "EJECUTANDO";
+        intervaloSim = setInterval(calcularSiguienteGen, velocidad);
     } else {
-        btn.innerText = "INICIAR SIMULACIÓN";
-        status.innerText = "PAUSADO";
-        clearInterval(simInterval);
+        btn.innerHTML = '<i class="fas fa-play"></i>';
+        estado.innerText = "PAUSADO";
+        clearInterval(intervaloSim);
     }
 }
 
-function updateSpeed() {
-    speed = document.getElementById('speed-control').value;
-    if (isRunning) {
-        clearInterval(simInterval);
-        simInterval = setInterval(computeNextGen, speed);
+function actualizarVelocidad() {
+    velocidad = document.getElementById('control-velocidad').value;
+    if (enEjecucion) {
+        clearInterval(intervaloSim);
+        intervaloSim = setInterval(calcularSiguienteGen, velocidad);
     }
 }
 
-function saveToLocal() {
-    const data = grid.map(row => row.map(cell => cell.isAlive));
-    localStorage.setItem('tno_cell_save', JSON.stringify(data));
-    alert("ESTADO GUARDADO");
+function limpiarRejilla() {
+    rejilla.forEach(f => f.forEach(c => c.estaViva = false));
+    dibujar();
 }
 
-function loadFromLocal() {
-    const saved = localStorage.getItem('tno_cell_save');
-    if (saved) {
-        const data = JSON.parse(saved);
-        grid = data.map(row => row.map(alive => new Cell(alive)));
-        draw();
-    }
+function actualizarEstadoUI() {
+    const cuenta = rejilla.flat().filter(c => c.estaViva).length;
+    document.getElementById('conteo-celulas').innerText = cuenta;
 }
 
-function updateStatus() {
-    const count = grid.flat().filter(c => c.isAlive).length;
-    document.getElementById('cell-count').innerText = count;
-}
-
-function resetGrid() {
-    grid.forEach(row => row.forEach(cell => cell.isAlive = false));
-    draw();
-}
-
-window.onload = init;
+window.onload = inicializar;

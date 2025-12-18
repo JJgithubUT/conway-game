@@ -2,16 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>TNO - Game of Life | Operational Map</title>
+    <title>TNO - El Juego de la Vida | Mapa Operativo</title>
     <link href="https://fonts.googleapis.com/css2?family=Aldrich&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
     <div class="scanline"></div>
     <div class="ui-wrapper">
         <header>
-            <h1>JUEGO DE LA VIDA DE CONWAY</h1>
-            <div class="status-bar">ESTADO: <span id="sim-status">HOLDEAR</span> | ESTADO GLOBAL: <span id="cell-count">0</span> ACTIVE</div>
+            <h1>JUEGO DE LA VIDA</h1>
+            <div class="status-bar">
+                ESTADO: <span id="sim-status" class="tno-text-glow">EN ESPERA</span> | 
+                CÉLULAS ACTIVAS: <span id="conteo-celulas">0</span>
+            </div>
         </header>
 
         <main>
@@ -21,27 +25,50 @@
 
             <aside class="control-panel">
                 <div class="menu-section">
-                    <h3>TEMPORAL CONTROLS</h3>
-                    <button onclick="toggleSim()" id="btn-play">INICIAR</button>
-                    <button onclick="resetGrid()">PURGE GRID</button>
-                    <label>EXECUTION SPEED</label>
-                    <select id="speed-control" onchange="updateSpeed()">
-                        <option value="500">SLOW (SNAIL)</option>
-                        <option value="100" selected>NORMAL (STABILIZED)</option>
-                        <option value="30">FAST (ACCELERATED)</option>
+                    <h3><i class="fas fa-clock"></i> TIEMPO</h3>
+                    <div class="button-group">
+                        <button onclick="alternarSimulacion()" id="btn-play" title="Iniciar/Pausar">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button onclick="limpiarRejilla()" title="Purgar Mapa">
+                            <i class="fas fa-trash-can"></i>
+                        </button>
+                    </div>
+                    <label>VELOCIDAD</label>
+                    <select id="control-velocidad" onchange="actualizarVelocidad()">
+                        <option value="500">LENTO</option>
+                        <option value="100" selected>NORMAL</option>
+                        <option value="30">RÁPIDO</option>
                     </select>
                 </div>
 
                 <div class="menu-section">
-                    <h3>DATA MANAGEMENT</h3>
-                    <button onclick="saveToLocal()">SAVE STATE</button>
-                    <button onclick="loadFromLocal()">LOAD STATE</button>
+                    <h3><i class="fas fa-save"></i> MEMORIA</h3>
+                    <input type="text" id="nombre-partida" placeholder="ID de la partida...">
+                    <button onclick="guardarPartidaLocal()"><i class="fas fa-floppy-disk"></i> GUARDAR</button>
+                    
+                    <label>REGISTROS</label>
+                    <select id="lista-partidas"></select>
+                    <div class="button-group">
+                        <button onclick="cargarPartidaLocal()" title="Cargar"><i class="fas fa-folder-open"></i></button>
+                        <button onclick="eliminarPartidaLocal()" class="btn-danger" title="Eliminar"><i class="fas fa-eraser"></i></button>
+                    </div>
                 </div>
 
                 <div class="menu-section">
-                    <h3>SUB-SECTOR SELECTION</h3>
-                    <p class="hint">Hold SHIFT + Drag to capture pattern</p>
-                    <button onclick="pastePattern()">PASTE CAPTURED</button>
+                    <h3><i class="fas fa-vector-square"></i> SUB-SECTORES</h3>
+                    <p class="hint">SHIFT + Arrastrar para capturar área</p>
+                    <button id="btn-pegar" onclick="activarModoPegado()">
+                        <i class="fas fa-paste"></i> PEGAR EN CLIC
+                    </button>
+                </div>
+
+                <div class="menu-section">
+                    <h3><i class="fa-light fa-cat-space"></i></i>Creador</h3>
+                    <p class="hint">\\// Juan Javier Castillo Bretón \\//</p>
+                    <label class="tno-text-glow-dark">
+                        <a href="https://github.com/JJgithubUT/" target="_blank">@GITHUB</a>
+                    </label>
                 </div>
             </aside>
         </main>
