@@ -1,0 +1,112 @@
+:root {
+    --tno-blue: #0080ff;
+    --tno-cyan: #00ffff;
+    --tno-bg: #050505;
+    --tno-border: #004080;
+    /* Aldrich para el sentimiento militar/tecnológico */
+    --tno-font-main: 'Aldrich', sans-serif;
+    /* VT323 para los logs o estados del sistema */
+    --tno-font-terminal: 'VT323', monospace;
+}
+
+h1, h3, button {
+    font-family: var(--tno-font-main);
+    letter-spacing: 1px;
+}
+
+#sim-status, .hint {
+    font-family: var(--tno-font-terminal);
+    font-size: 1.2rem;
+}
+
+.tno-text-glow {
+    color: #00ffff;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+body {
+    background-color: var(--tno-bg);
+    color: var(--tno-cyan);
+    font-family: 'Courier New', Courier, monospace;
+    margin: 0;
+    overflow: hidden;
+    text-transform: uppercase;
+}
+
+/* efecto too guapo de TV antigüa */
+.scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 10;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+    opacity: 0.1;
+    position: fixed;
+    pointer-events: none;
+    animation: scan 4s linear infinite;
+}
+
+@keyframes scan { from { top: -100px; } to { top: 100%; } }
+
+.ui-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 20px;
+    border: 2px solid var(--tno-border);
+}
+
+header {
+    border-bottom: 2px solid var(--tno-cyan);
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+}
+
+main {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+}
+
+.canvas-container {
+    flex: 3;
+    border: 1px solid var(--tno-blue);
+    background: #000;
+    position: relative;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    cursor: crosshair;
+}
+
+.control-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.menu-section {
+    border: 1px solid var(--tno-border);
+    padding: 10px;
+}
+
+button, select {
+    background: transparent;
+    border: 1px solid var(--tno-cyan);
+    color: var(--tno-cyan);
+    padding: 8px;
+    width: 100%;
+    margin: 5px 0;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: var(--tno-blue);
+    color: white;
+}
+
+.hint { font-size: 0.7em; color: var(--tno-blue); }

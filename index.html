@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>TNO - Game of Life | Operational Map</title>
+    <link href="https://fonts.googleapis.com/css2?family=Aldrich&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="scanline"></div>
+    <div class="ui-wrapper">
+        <header>
+            <h1>JUEGO DE LA VIDA DE CONWAY</h1>
+            <div class="status-bar">ESTADO: <span id="sim-status">HOLDEAR</span> | ESTADO GLOBAL: <span id="cell-count">0</span> ACTIVE</div>
+        </header>
+
+        <main>
+            <div class="canvas-container">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+
+            <aside class="control-panel">
+                <div class="menu-section">
+                    <h3>TEMPORAL CONTROLS</h3>
+                    <button onclick="toggleSim()" id="btn-play">INICIAR</button>
+                    <button onclick="resetGrid()">PURGE GRID</button>
+                    <label>EXECUTION SPEED</label>
+                    <select id="speed-control" onchange="updateSpeed()">
+                        <option value="500">SLOW (SNAIL)</option>
+                        <option value="100" selected>NORMAL (STABILIZED)</option>
+                        <option value="30">FAST (ACCELERATED)</option>
+                    </select>
+                </div>
+
+                <div class="menu-section">
+                    <h3>DATA MANAGEMENT</h3>
+                    <button onclick="saveToLocal()">SAVE STATE</button>
+                    <button onclick="loadFromLocal()">LOAD STATE</button>
+                </div>
+
+                <div class="menu-section">
+                    <h3>SUB-SECTOR SELECTION</h3>
+                    <p class="hint">Hold SHIFT + Drag to capture pattern</p>
+                    <button onclick="pastePattern()">PASTE CAPTURED</button>
+                </div>
+            </aside>
+        </main>
+    </div>
+    <script src="./script.js"></script>
+</body>
+</html>
